@@ -1,0 +1,1049 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="快团团素材生成器：单文件本地商品海报工具，支持本机商品图、二维码和商品文案实时预览。">
+  <title>快团团素材生成器 · 本机素材预览</title>
+  <style>
+    :root {
+      --page: #f7f8fa;
+      --surface: #ffffff;
+      --ink: #25272d;
+      --muted: #69707d;
+      --line: #e7e8ed;
+      --accent: #ef4c5a;
+      --accent-soft: #fff0f1;
+      --accent-ink: #bd263b;
+      --teal: #1699aa;
+      --orange: #f28048;
+      --field: #fbfbfc;
+      --disabled: #f0f1f4;
+      --scroll-thumb: #bbc0c9;
+      --scroll-track: #f7f8fa;
+      --scroll-hover: #969da8;
+      --scroll-active: #69707d;
+      --radius: 16px;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    * { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: var(--scroll-thumb) var(--scroll-track); }
+    *::-webkit-scrollbar { width: 10px; height: 10px; }
+    *::-webkit-scrollbar-track { background: var(--scroll-track); }
+    *::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border: 2px solid var(--scroll-track); border-radius: 6px; }
+    *::-webkit-scrollbar-thumb:hover { background: var(--scroll-hover); }
+    *::-webkit-scrollbar-thumb:active { background: var(--scroll-active); }
+    html { scroll-padding-top: 28px; scrollbar-gutter: stable; }
+    body { margin: 0; background: var(--page); color: var(--ink); font-family: var(--font); font-size: 14px; line-height: 1.6; }
+    h1, h2, h3, p, figure { margin: 0; }
+    button, input, textarea, select { font: inherit; }
+    button { color: inherit; }
+    button:not(:disabled), select:not(:disabled) { cursor: pointer; }
+    button:not(:disabled):hover { border-color: var(--accent); }
+    button:not(:disabled):active { transform: translateY(1px); }
+    button:disabled, select:disabled { cursor: not-allowed; opacity: 1; }
+    :focus-visible { outline: 3px solid var(--accent-ink); outline-offset: 3px; }
+    a { color: var(--accent-ink); text-underline-offset: 4px; }
+    a:hover { color: var(--ink); }
+    a:active { color: var(--accent-ink); }
+    .icon { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+    .sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    .skip-link { position: absolute; top: -80px; left: 20px; padding: 10px 16px; z-index: 10; background: var(--surface); }
+    .skip-link:focus { top: 12px; }
+    .app-header { background: var(--surface); border-bottom: 1px solid var(--line); }
+    .header-inner { max-width: 1360px; margin: auto; padding: 20px 32px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .brand-mark { width: 42px; height: 42px; border-radius: 13px 13px 13px 4px; background: var(--accent); color: var(--surface); display: grid; place-items: center; font-size: 24px; font-weight: 800; }
+    .brand-name { font-size: 19px; font-weight: 750; letter-spacing: -.5px; }
+    .brand-note { color: var(--muted); font-size: 12px; margin-top: 1px; }
+    .local-badge { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; white-space: nowrap; }
+    .local-badge .icon { width: 16px; height: 16px; }
+    .workspace { max-width: 1360px; margin: auto; padding: 26px 32px 40px; }
+    .review-note { display: flex; align-items: flex-start; gap: 10px; padding: 13px 17px; margin-bottom: 24px; background: var(--accent-soft); border: 1px solid #fad9de; border-radius: 10px; }
+    .review-note .icon { margin-top: 1px; color: var(--accent-ink); }
+    .review-note p { font-size: 13px; line-height: 1.7; }
+    .review-note strong { color: var(--accent-ink); margin-right: 10px; font-weight: 650; }
+    .workspace-grid { display: grid; grid-template-columns: minmax(380px, 500px) minmax(0, 1fr); align-items: start; gap: 30px; }
+    .column-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 15px; }
+    .column-heading h1, .column-heading h2 { font-size: 18px; font-weight: 700; letter-spacing: -.3px; }
+    .heading-detail { font-size: 12px; color: var(--muted); }
+    .editor { min-width: 0; }
+    .editor-form { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+    .form-section { padding: 24px; }
+    .form-section + .form-section { border-top: 1px solid var(--line); }
+    .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+    .section-heading h2 { font-size: 14px; font-weight: 700; }
+    .section-hint { font-size: 12px; color: var(--muted); }
+    .template-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .template-option { cursor: pointer; --template-color: var(--accent); display: flex; flex-direction: column; align-items: stretch; gap: 10px; padding: 12px 10px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font-size: 12px; color: var(--muted); }
+    .template-option.is-selected { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-ink); }
+    .template-option::after { content: '点击选择'; text-align: center; font-size: 11px; line-height: 16px; }
+    .template-option.is-selected { box-shadow: inset 0 0 0 1px var(--accent); }
+    .template-option.is-selected::after { content: '✓ 当前版式'; font-weight: 700; }
+    .template-option.is-list { --template-color: var(--teal); }
+    .template-option.is-large { --template-color: var(--orange); }
+    .template-name { display: flex; justify-content: center; align-items: center; gap: 4px; white-space: nowrap; font-weight: 600; }
+    .template-name .icon { width: 13px; height: 13px; }
+    .mini-poster { height: 65px; width: 44px; margin: auto; padding: 5px; border: 1px solid var(--line); border-radius: 3px; background: var(--surface); display: grid; grid-template-rows: 5px 27px 3px 3px; gap: 4px; }
+    .mini-band { background: var(--template-color); border-radius: 1px; }
+    .mini-picture { width: 22px; justify-self: center; background: var(--disabled); border-radius: 2px; }
+    .mini-line { background: var(--line); border-radius: 1px; }
+    .mini-line:last-child { width: 70%; }
+    .is-list .mini-picture { width: 16px; justify-self: start; box-shadow: 20px 0 0 -5px var(--line); }
+    .is-large .mini-picture { width: 100%; }
+    .field { display: grid; gap: 7px; min-width: 0; }
+    .field + .field, .field-row + .field, .field + .field-row { margin-top: 16px; }
+    .field-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .field-row .field { margin-top: 0; }
+    label, .field-label { font-size: 13px; font-weight: 550; }
+    input:not([type="file"]), textarea, select { width: 100%; min-width: 0; border: 1px solid var(--line); background: var(--field); border-radius: 8px; padding: 10px 12px; color: var(--ink); line-height: 1.5; }
+    input:not([type="file"]), select { height: 43px; }
+    input:hover, textarea:hover { border-color: #c9cdd5; }
+    input:focus, textarea:focus, select:focus { background: var(--surface); }
+    input::placeholder, textarea::placeholder { color: var(--muted); }
+    textarea { resize: none; min-height: 108px; }
+    select:disabled { color: var(--muted); -webkit-text-fill-color: var(--muted); background: var(--disabled); }
+    .help { font-size: 12px; color: var(--muted); line-height: 1.7; }
+    .field-feedback { min-height: 21px; }
+    .field-feedback.is-truncated { color: var(--accent-ink); font-weight: 550; }
+    .field-feedback.is-invalid { color: var(--accent-ink); font-weight: 550; }
+    input[aria-invalid="true"] { border-color: var(--accent-ink); }
+    .section-footnote { margin-top: 12px; }
+    .upload-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; margin-bottom: 18px; }
+    .upload-field { display: grid; gap: 8px; min-width: 0; }
+    .upload-well { min-height: 126px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 5px; border: 1px dashed #cdd1d9; border-radius: 10px; background: var(--field); color: var(--muted); padding: 16px 8px; }
+    .upload-well .icon { width: 26px; height: 26px; margin-bottom: 4px; }
+    .upload-well strong { color: var(--ink); font-size: 12px; font-weight: 550; }
+    .upload-well span { font-size: 11px; max-width: 100%; overflow-wrap: anywhere; }
+    .upload-field .field-feedback { overflow-wrap: anywhere; }
+    .file-control { width: 100%; font-size: 11px; color: var(--muted); }
+    .file-control::file-selector-button { border: 1px solid var(--line); background: var(--surface); color: var(--accent-ink); padding: 6px 8px; border-radius: 5px; font: inherit; margin-right: 5px; cursor: pointer; }
+    .file-control::file-selector-button:hover { border-color: var(--accent); background: var(--accent-soft); }
+    .points { display: grid; gap: 10px; }
+    .point-item { min-width: 0; }
+    .point-item .field-feedback { margin-left: 25px; }
+    .point-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .point-number { color: var(--muted); width: 17px; flex: none; text-align: center; font-size: 12px; font-variant-numeric: tabular-nums; }
+    .point-row input { flex: 1; min-width: 0; }
+    .icon-button { width: 40px; height: 43px; flex: none; display: grid; place-items: center; background: var(--field); border: 1px solid var(--line); border-radius: 8px; color: var(--muted); }
+    .icon-button .icon { width: 17px; height: 17px; }
+    .point-row .icon-button { font-size: 24px; line-height: 1; }
+    .add-point { display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; padding: 10px; margin-top: 12px; border: 1px dashed #cdd1d9; border-radius: 8px; background: var(--field); color: var(--muted); font-size: 12px; }
+    .add-point .icon { width: 16px; height: 16px; }
+    .add-point:disabled { background: var(--disabled); border-style: solid; }
+    .price-input { position: relative; }
+    .price-input span { position: absolute; left: 12px; top: 9px; color: var(--muted); }
+    .price-input input { padding-left: 29px; font-variant-numeric: tabular-nums; }
+    .discount-example { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 8px; padding-top: 10px; font-size: 12px; color: var(--muted); }
+    .discount-pill { color: var(--accent-ink); background: var(--accent-soft); padding: 2px 8px; border-radius: 5px; font-weight: 600; white-space: nowrap; }
+    .form-actions { padding: 19px 24px 21px; border-top: 1px solid var(--line); background: var(--field); }
+    .action-buttons { display: grid; grid-template-columns: 1fr 1.4fr; gap: 10px; }
+    .action-button { height: 44px; display: flex; justify-content: center; align-items: center; gap: 7px; border: 1px solid #d9dce3; border-radius: 9px; background: var(--surface); color: var(--muted); font-weight: 600; }
+    .action-button.export { background: var(--disabled); }
+    .form-actions .help { margin-top: 10px; text-align: center; }
+    .preview-column { position: sticky; top: 24px; min-width: 0; }
+    .preview-meta { display: flex; gap: 7px; align-items: center; color: var(--muted); font-size: 12px; }
+    .preview-meta .icon { width: 15px; height: 15px; }
+    .preview-stage { min-width: 0; padding: 26px 24px 20px; border: 1px solid var(--line); border-radius: var(--radius); background-color: #f0f1f5; background-image: radial-gradient(#d7dbe3 .7px, transparent .7px); background-size: 12px 12px; }
+    .preview-stage-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 18px; font-size: 11px; color: #586170; }
+    .preview-label { display: flex; gap: 6px; align-items: center; }
+    .status-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+    .poster-frame { width: min(100%, 390px); margin: 0 auto; border-radius: 12px; overflow: hidden; background: var(--surface); box-shadow: 0 12px 30px -12px #24293635, 0 2px 6px #2429360a; }
+    canvas { display: block; width: 100%; height: auto; aspect-ratio: 9 / 16; }
+    .preview-caption { margin-top: 18px; color: #586170; font-size: 11px; text-align: center; }
+    .preview-note { display: flex; align-items: flex-start; justify-content: center; gap: 6px; color: var(--muted); font-size: 12px; margin-top: 15px; }
+    .preview-note .icon { width: 15px; height: 15px; margin-top: 2px; }
+    .page-footer { text-align: center; margin-top: 26px; font-size: 12px; color: var(--muted); }
+    @media (max-width: 1100px) {
+      .header-inner { padding-inline: 24px; }
+      .workspace { padding-inline: 24px; }
+      .workspace-grid { grid-template-columns: minmax(360px, 440px) minmax(0, 1fr); gap: 22px; }
+      .form-section { padding: 20px; }
+      .preview-stage { padding-inline: 18px; }
+    }
+    @media (max-width: 860px) {
+      .workspace-grid { grid-template-columns: minmax(0, 1fr); gap: 26px; }
+      .workspace { max-width: 620px; }
+      .preview-column { position: static; }
+      .poster-frame { width: min(100%, 360px); }
+      .preview-stage { padding: 20px; }
+    }
+    @media (max-width: 480px) {
+      .header-inner { padding: 16px; gap: 8px; }
+      .brand { gap: 9px; }
+      .brand-mark { width: 36px; height: 36px; font-size: 22px; border-radius: 10px 10px 10px 3px; }
+      .brand-name { font-size: 17px; }
+      .brand-note { font-size: 11px; }
+      .local-badge { font-size: 11px; }
+      .local-badge .icon { display: none; }
+      .workspace { padding: 18px 14px 28px; }
+      .review-note { padding: 11px 12px; margin-bottom: 20px; }
+      .review-note p { font-size: 12px; }
+      .review-note strong { display: block; margin-bottom: 3px; }
+      .form-section { padding: 19px 16px; }
+      .template-options { gap: 8px; }
+      .template-option { padding-inline: 5px; }
+      .field-row { gap: 10px; }
+      input:not([type="file"]), textarea, select { font-size: 16px; }
+      .upload-grid { gap: 10px; grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .file-control { font-size: 10px; }
+      .point-number { width: 12px; }
+      .point-row { gap: 6px; }
+      .form-actions { padding: 16px; }
+      .preview-stage { padding: 16px; }
+    }
+    /* 桌面由左侧表单拥有滚动；手机恢复自然页面滚动。 */
+    @media (min-width: 861px) {
+      body { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+      .app-header { flex: none; }
+      .header-inner { padding-block: 15px; }
+      .workspace { width: 100%; flex: 1; min-height: 0; display: flex; flex-direction: column; padding-block: 20px; }
+      .review-note { flex: none; margin-bottom: 18px; }
+      .workspace-grid { flex: 1; min-height: 0; align-items: stretch; }
+      .editor { display: flex; flex-direction: column; min-height: 0; }
+      .column-heading { flex: none; margin-bottom: 12px; }
+      .editor-form { flex: 1; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; scroll-padding-block: 16px 135px; }
+      .editor-form input, .editor-form textarea { scroll-margin-block: 18px 135px; }
+      .form-actions { position: sticky; bottom: 0; z-index: 1; background: var(--surface); box-shadow: 0 -5px 12px #25272d06; }
+      .preview-column { position: static; display: flex; flex-direction: column; min-height: 0; }
+      .preview-stage { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 20px; }
+      .preview-stage-top { flex: none; margin-bottom: 12px; }
+      .poster-frame { flex: 1; min-height: 0; width: 100%; max-width: none; display: flex; align-items: center; justify-content: center; overflow: visible; border-radius: 0; background: transparent; box-shadow: none; }
+      canvas { width: auto; height: auto; max-width: 100%; max-height: 100%; border-radius: 12px; box-shadow: 0 12px 30px -12px #24293635, 0 2px 6px #2429360a; }
+      .preview-caption, .preview-note, .page-footer { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+    @media (forced-colors: active) {
+      * { scrollbar-color: auto; }
+      .template-option.is-selected { border: 2px solid Highlight; }
+      .review-note, .upload-well, .preview-stage { border-color: CanvasText; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#editor-heading">跳到素材信息</a>
+  <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.5"/><path d="m3 17 5-5 4 4 4-6 5 7"/></symbol>
+    <symbol id="i-qr" viewBox="0 0 24 24"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="15" y="3" width="6" height="6" rx="1"/><rect x="3" y="15" width="6" height="6" rx="1"/><path d="M15 15h3v3h3v3h-6v-3M21 12v1M12 3v3M3 12h3m6-3v6"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6Z"/><path d="m8 12 3 3 5-6"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-9v.1"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 1 8M4 4v6h6"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol>
+    <symbol id="i-size" viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M10 6h4m-4 12h4"/></symbol>
+  </svg>
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">团</span>
+        <div><div class="brand-name">快团团素材生成器</div><p class="brand-note">把好商品，做成好素材。</p></div>
+      </div>
+      <span class="local-badge"><svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg>本地版</span>
+    </div>
+  </header>
+  <main class="workspace">
+    <div class="review-note" id="skeleton-note">
+      <svg class="icon" aria-hidden="true"><use href="#i-info"/></svg>
+      <p><strong>本机实时预览</strong>文案、卖点、价格和本机图片实时更新；初始文案为教学示例，未选图时显示占位。</p>
+    </div>
+    <div class="workspace-grid">
+      <section class="editor" aria-labelledby="editor-heading">
+        <div class="column-heading"><h1 id="editor-heading" tabindex="-1">素材信息</h1><span class="heading-detail">文案 · 图片 · 版式</span></div>
+        <form class="editor-form" id="posterForm" novalidate autocomplete="off" aria-describedby="skeleton-note">
+          <section class="form-section" aria-labelledby="template-heading">
+            <div class="section-heading"><h2 id="template-heading">版式模板</h2><span class="section-hint">共 3 种版式</span></div>
+            <div class="template-options" role="group" aria-label="选择版式">
+              <button class="template-option is-selected" type="button" id="template-center" data-template="center" aria-pressed="true" aria-describedby="template-help">
+                <span class="mini-poster" aria-hidden="true"><span class="mini-band"></span><span class="mini-picture"></span><span class="mini-line"></span><span class="mini-line"></span></span>
+                <span class="template-name">居中促销</span>
+              </button>
+              <button class="template-option is-list" type="button" id="template-list" data-template="list" aria-pressed="false" aria-describedby="template-help">
+                <span class="mini-poster" aria-hidden="true"><span class="mini-band"></span><span class="mini-picture"></span><span class="mini-line"></span><span class="mini-line"></span></span>
+                <span class="template-name">左图清单</span>
+              </button>
+              <button class="template-option is-large" type="button" id="template-large" data-template="large" aria-pressed="false" aria-describedby="template-help">
+                <span class="mini-poster" aria-hidden="true"><span class="mini-band"></span><span class="mini-picture"></span><span class="mini-line"></span><span class="mini-line"></span></span>
+                <span class="template-name">大图爆款</span>
+              </button>
+            </div>
+            <p class="help section-footnote" id="template-help">三种版式即时切换，保留文案、价格、图片与比例设置。</p>
+          </section>
+          <section class="form-section" aria-labelledby="basic-heading">
+            <div class="section-heading"><h2 id="basic-heading">基础信息</h2></div>
+            <div class="field-row">
+              <div class="field"><label for="topTag">顶部标签</label><input id="topTag" name="topTag" value="今日开团（示例）" aria-describedby="topTag-help"><p class="help field-feedback" id="topTag-help" aria-live="polite">最多 1 行，超出显示 …</p></div>
+              <div class="field"><label for="brandName">团长昵称 / 品牌</label><input id="brandName" name="brandName" value="示例团长·品牌名" aria-describedby="brandName-help"><p class="help field-feedback" id="brandName-help" aria-live="polite">最多 1 行，超出显示 …</p></div>
+            </div>
+            <div class="field"><label for="productTitle">商品标题</label><input id="productTitle" name="productTitle" value="【教学示例】这里填写商品标题" aria-describedby="productTitle-help"><p class="help field-feedback" id="productTitle-help" aria-live="polite">最多 2 行，超出显示 …</p></div>
+            <div class="field"><label for="subtitle">副标题 / 一句话卖点</label><input id="subtitle" name="subtitle" value="用一句话介绍商品亮点（示例）" aria-describedby="subtitle-help"><p class="help field-feedback" id="subtitle-help" aria-live="polite">最多 1 行，超出显示 …</p></div>
+          </section>
+          <section class="form-section" aria-labelledby="images-heading">
+            <div class="section-heading"><h2 id="images-heading">图片素材</h2><span class="section-hint">仅在浏览器内处理</span></div>
+            <div class="upload-grid">
+              <div class="upload-field">
+                <label for="productImage">商品主图</label>
+                <div class="upload-well"><svg class="icon" aria-hidden="true"><use href="#i-image"/></svg><strong id="productImage-label">未选择主图</strong><span id="productImage-file">PNG / JPG</span></div>
+                <input class="file-control" type="file" id="productImage" name="productImage" accept=".png,.jpg,.jpeg,image/png,image/jpeg" aria-describedby="productImage-status upload-help" aria-invalid="false">
+                <p class="help field-feedback" id="productImage-status" role="status" aria-live="polite">尚未选图，海报显示占位。</p>
+              </div>
+              <div class="upload-field">
+                <label for="qrImage">二维码</label>
+                <div class="upload-well"><svg class="icon" aria-hidden="true"><use href="#i-qr"/></svg><strong id="qrImage-label">未选择二维码</strong><span id="qrImage-file">PNG / JPG</span></div>
+                <input class="file-control" type="file" id="qrImage" name="qrImage" accept=".png,.jpg,.jpeg,image/png,image/jpeg" aria-describedby="qrImage-status qr-usage-help upload-help" aria-invalid="false">
+                <p class="help field-feedback" id="qrImage-status" role="status" aria-live="polite">尚未选图，海报显示占位。</p>
+                <p class="help" id="qr-usage-help">仅接收你已有的二维码图片，不生成商品购买码。二维码完整等比显示并保留白边，不受主图裁切设置影响。教学占位不可扫码，不是真实购买入口。正式使用前，请用实际码和最终导出图片检查识别结果。</p>
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field"><label for="imageRatio">图片展示比例</label><select id="imageRatio" name="imageRatio" aria-describedby="ratio-help upload-help"><option value="auto">自动识别</option><option value="portrait">3:4 竖图</option><option value="square">1:1 方图</option><option value="original">保留原图比例</option></select></div>
+              <div class="field"><label for="imageFit">图片适配方式</label><select id="imageFit" name="imageFit" aria-describedby="fit-help upload-help"><option value="contain">完整展示</option><option value="cover">铺满裁切</option></select></div>
+            </div>
+            <p class="help section-footnote" id="ratio-help">自动识别：宽高比小于 0.875 用 3:4，否则用 1:1；保留原图比例使用实际宽高比。只改变主图框，海报始终为 720 × 1280。</p>
+            <p class="help" id="fit-help">完整展示保留全部画面；铺满裁切填满图片框，允许裁边。二维码不裁切。</p>
+            <p class="help" id="upload-help">仅支持本机 PNG / JPG（含 JPEG），每张不超过 20 MB、4000 万像素。成功选图后，上方显示当前使用的文件；再次选择可替换，取消或失败保留原图。图片不上传，刷新后需重选。</p>
+            <p class="help" id="image-layout-status" role="status" aria-live="polite">尚未选图，默认使用 3:4 占位。</p><p class="help">试一试：选一张 3:4 竖图，将展示比例设为 1:1。完整展示时左右留白；铺满裁切时上下裁边，图片不变形。二维码始终完整显示。</p>
+          </section>
+          <section class="form-section" aria-labelledby="points-heading">
+            <div class="section-heading"><h2 id="points-heading">核心卖点</h2><span class="section-hint" id="pointsCount">3 / 6 条</span></div>
+            <div class="points" id="points"></div>
+            <p class="help" id="pointsEmpty" hidden>还没有卖点，点击下方按钮添加；也可以保持为空。</p>
+            <button type="button" class="add-point" id="addPoint" aria-describedby="points-help pointsStatus">+ 添加一条卖点</button>
+            <p class="help section-footnote" id="points-help">最多 6 条，空输入框也计入上限。海报只显示非空卖点；居中促销／大图爆款每条最多 1 行，左图清单最多 2 行；超出显示 …，原文保留。图片框按布局分配空间，价格和二维码位置固定。</p>
+            <p class="help" id="pointsStatus" role="status" aria-live="polite"></p>
+          </section>
+          <section class="form-section" aria-labelledby="price-heading">
+            <div class="section-heading"><h2 id="price-heading">价格和转化文案</h2><span class="section-hint">金额单位：元</span></div>
+            <div class="field-row">
+              <div class="field"><label for="originalPrice">原价</label><div class="price-input"><span aria-hidden="true">¥</span><input id="originalPrice" name="originalPrice" type="text" inputmode="decimal" value="39.90" placeholder="例如 39.90" aria-describedby="originalPrice-help price-rules" aria-invalid="false"></div><p class="help field-feedback" id="originalPrice-help" aria-live="polite">请填写原价，留空不会按 0 元处理。</p></div>
+              <div class="field"><label for="salePrice">团购价</label><div class="price-input"><span aria-hidden="true">¥</span><input id="salePrice" name="salePrice" type="text" inputmode="decimal" value="19.90" placeholder="例如 19.90" aria-describedby="salePrice-help price-rules" aria-invalid="false"></div><p class="help field-feedback" id="salePrice-help" aria-live="polite">请填写团购价，留空不会按 0 元处理。</p></div>
+            </div>
+            <p class="help" id="price-rules">请输入 0～999999.99 元的普通数字，不含货币符号或逗号。价格显示两位小数，超过两位时四舍五入；优惠按显示价格计算，再四舍五入到整数。输入原文保留。</p>
+            <p class="discount-example" id="discount-help" aria-live="polite"><span class="discount-pill" id="discountValue">立省 ¥20</span><span id="discountNote">节省金额按整数四舍五入显示。</span></p>
+            <div class="field" style="margin-top: 18px"><label for="leaderNote">团长说</label><textarea id="leaderNote" name="leaderNote" rows="4" style="resize: none" aria-describedby="leaderNote-help leaderNote-break-help">教学示例：在这里写下你的推荐理由，让顾客了解这件商品适合谁、好在哪里。</textarea><p class="help field-feedback" id="leaderNote-help" aria-live="polite">最多 2 行，超出显示 …</p><p class="help" id="leaderNote-break-help">支持回车换行；空行也计入两行限制。</p></div>
+            <div class="field"><label for="shipping">规格 / 发货信息</label><input id="shipping" name="shipping" value="规格示例 · 发货时效示例 · 售后说明" aria-describedby="shipping-help"><p class="help field-feedback" id="shipping-help" aria-live="polite">最多 2 行，超出显示 …</p></div>
+            <div class="field"><label for="buttonMain">按钮主文案</label><input id="buttonMain" name="buttonMain" value="扫码提示主文案（教学示例）" aria-describedby="buttonMain-help"><p class="help field-feedback" id="buttonMain-help" aria-live="polite">最多 1 行，超出显示 …</p></div>
+            <div class="field"><label for="buttonSub">按钮副文案</label><input id="buttonSub" name="buttonSub" value="教学示例，不代表真实购买入口" aria-describedby="buttonSub-help"><p class="help field-feedback" id="buttonSub-help" aria-live="polite">最多 1 行，超出显示 …</p></div>
+          </section>
+          <footer class="form-actions">
+            <div class="action-buttons">
+              <button class="action-button" type="button" id="resetDemo" aria-describedby="reset-help reset-status"><svg class="icon" aria-hidden="true"><use href="#i-reset"/></svg>恢复示例</button>
+              <button class="action-button export" type="button" id="exportPng" aria-describedby="actions-help export-status"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg>导出 PNG</button>
+            </div>
+            <p class="help" id="reset-help">恢复示例会替换当前文字、价格和卖点，清空两张图片，恢复自动比例与完整展示；保留当前版式。导出处理中暂不可恢复。</p>
+            <p class="help" id="reset-status" role="status" aria-live="polite"></p>
+            <p class="help" id="actions-help">导出仅包含 720 × 1280 海报；当前不保存草稿。</p>
+            <p class="help field-feedback" id="export-status" role="status" aria-live="polite">下载位置由浏览器设置决定，通常为“下载”文件夹。请用实际码检查最终 PNG 的识别结果。</p>
+          </footer>
+        </form>
+      </section>
+      <aside class="preview-column" aria-labelledby="preview-heading">
+        <div class="column-heading"><h2 id="preview-heading">海报预览</h2><span class="preview-meta"><svg class="icon" aria-hidden="true"><use href="#i-size"/></svg>720 × 1280 px</span></div>
+        <figure class="preview-stage">
+          <div class="preview-stage-top"><span class="preview-label"><span class="status-dot" aria-hidden="true"></span><span id="active-template-name">居中促销</span></span><span>实时更新</span></div>
+          <div class="poster-frame"><canvas id="previewCanvas" width="720" height="1280" role="img" aria-label="居中促销海报，720 × 1280 像素。商品文案、价格和本机图片支持实时预览。">居中促销海报：本机选图及文字支持实时预览。初始文案和价格仅为示例。尚未选择主图和二维码，二维码占位不可扫码。</canvas></div>
+          <figcaption class="preview-caption">预览按屏幕缩放，海报尺寸保持不变</figcaption>
+        </figure>
+        <p class="preview-note"><svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg><span>图片仅在浏览器内处理，不上传到其他服务。</span></p>
+      </aside>
+    </div>
+    <p class="page-footer">当前不保存草稿，刷新或关闭后不会恢复本次填写。</p>
+    <noscript><p class="review-note">请开启浏览器 JavaScript 以使用实时预览与本机选图。</p></noscript>
+  </main>
+  <script>
+    'use strict';
+    // 当前素材只保存在本页内存。选图不会写入源码、草稿或网络服务。
+    document.getElementById('posterForm').addEventListener('submit', (event) => event.preventDefault());
+
+    const currentAssets = {
+      product: { inputId: 'productImage', title: '主图', asset: null, revision: 0, status: 'empty', error: '', pendingName: '' },
+      qr: { inputId: 'qrImage', title: '二维码', asset: null, revision: 0, status: 'empty', error: '', pendingName: '' }
+    };
+
+    // 预览及后续导出统一取这里的已解码素材，不重新读取 file input 或复制另一份图片状态。
+    function getCurrentMaterials() {
+      return { product: currentAssets.product.asset, qr: currentAssets.qr.asset };
+    }
+
+    function sniffImageType(buffer) {
+      const bytes = new Uint8Array(buffer);
+      const png = [137, 80, 78, 71, 13, 10, 26, 10];
+      if (png.every((byte, index) => bytes[index] === byte)) return 'image/png';
+      if (bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255) return 'image/jpeg';
+      return null;
+    }
+
+    function localImageError(message) {
+      const error = new Error(message);
+      error.userMessage = message;
+      return error;
+    }
+
+    async function readLocalImage(file) {
+      if (file.size === 0) throw localImageError('这是空文件，无法读取图片，请重新选择。');
+      if (file.size > 20 * 1024 * 1024) throw localImageError('图片超过 20 MB，请压缩后重新选择。');
+      let buffer;
+      try { buffer = await file.arrayBuffer(); }
+      catch { throw localImageError('无法读取这个文件，请确认文件仍可访问，再重新选择。'); }
+      const type = sniffImageType(buffer);
+      if (!type) {
+        const claimsSupported = /\.(png|jpe?g)$/i.test(file.name) || /image\/(png|jpeg)/i.test(file.type);
+        throw localImageError(claimsSupported
+          ? '文件内容不是有效 PNG / JPG，可能已损坏或只修改了后缀；请重新导出图片。'
+          : '暂不支持这种图片格式，请另存为 PNG / JPG 后选择。');
+      }
+      const url = URL.createObjectURL(new Blob([buffer], { type }));
+      try {
+        const image = await new Promise((resolve, reject) => {
+          const decoded = new Image();
+          const finish = (error) => {
+            decoded.onload = null;
+            decoded.onerror = null;
+            if (error) reject(error); else resolve(decoded);
+          };
+          decoded.onload = () => {
+            const pixels = decoded.naturalWidth * decoded.naturalHeight;
+            if (!Number.isFinite(pixels) || pixels <= 0) {
+              finish(localImageError('图片尺寸无效，文件可能已损坏，请重新导出 PNG / JPG。'));
+            } else if (pixels > 40000000) {
+              finish(localImageError('图片超过 4000 万像素，请缩小尺寸后重新选择。'));
+            } else finish();
+          };
+          decoded.onerror = () => finish(localImageError('图片无法解码，文件可能已损坏；请重新导出 PNG / JPG。'));
+          decoded.src = url;
+        });
+        return { image, name: file.name || '未命名图片', type, width: image.naturalWidth, height: image.naturalHeight };
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    }
+
+    function updateImageFeedback() {
+      for (const slot of Object.values(currentAssets)) {
+        const asset = slot.asset;
+        document.getElementById(`${slot.inputId}-label`).textContent = asset ? `当前使用的${slot.title}` : `未选择${slot.title}`;
+        document.getElementById(`${slot.inputId}-file`).textContent = asset ? asset.name : 'PNG / JPG';
+        let message = '尚未选图，海报显示占位。';
+        if (slot.status === 'loading') {
+          message = `正在读取「${slot.pendingName}」…${asset ? `当前仍使用「${asset.name}」。` : '完成前显示占位。'}`;
+        } else if (slot.status === 'ready') {
+          message = `已读取「${asset.name}」 · ${asset.width} × ${asset.height} 像素。再次选择可替换。`;
+        } else if (slot.status === 'error') {
+          message = `${slot.error}${asset ? `仍使用「${asset.name}」。` : '尚未选入有效图片，当前为占位。'}`;
+        }
+        const help = document.getElementById(`${slot.inputId}-status`);
+        if (help.textContent !== message) help.textContent = message;
+        help.classList.toggle('is-invalid', slot.status === 'error');
+        const input = document.getElementById(slot.inputId);
+        input.setAttribute('aria-invalid', String(slot.status === 'error'));
+        input.setAttribute('aria-busy', String(slot.status === 'loading'));
+      }
+    }
+
+    const imageStateListeners = new Set();
+    async function selectLocalImage(kind, file) {
+      if (!file) return; // 关闭选择窗口或取消选择不会清空当前图片。
+      const slot = currentAssets[kind];
+      const revision = ++slot.revision;
+      slot.status = 'loading';
+      slot.error = '';
+      slot.pendingName = file.name || '未命名图片';
+      drawPosterPreview();
+      try {
+        slot.pending = readLocalImage(file);
+        const asset = await slot.pending;
+        if (revision !== slot.revision) return;
+        slot.asset = asset;
+        slot.status = 'ready';
+      } catch (error) {
+        if (revision !== slot.revision) return;
+        slot.status = 'error';
+        slot.error = error.userMessage || '无法处理这张图片，请重新选择 PNG / JPG 文件。';
+      } finally {
+        if (revision === slot.revision) slot.pending = null;
+        imageStateListeners.forEach(check => check());
+      }
+      drawPosterPreview();
+    }
+
+    function drawContainedImage(ctx, asset, region, isQR = false, fit = 'contain') {
+      // 同一个缩放倍数用于宽高；cover 超出的部分由图片框裁掉。
+      const scale = (fit === 'cover' && !isQR ? Math.max : Math.min)(region.width / asset.width, region.height / asset.height);
+      const width = asset.width * scale;
+      const height = asset.height * scale;
+      const x = region.x + (region.width - width) / 2;
+      const y = region.y + (region.height - height) / 2;
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(region.x, region.y, region.width, region.height);
+      ctx.clip();
+      ctx.imageSmoothingEnabled = !isQR;
+      ctx.drawImage(asset.image, x, y, width, height);
+      ctx.restore();
+    }
+
+    const textRegions = [
+      { id: 'brandName', label: '团长昵称 / 品牌', placeholder: '请填写团长昵称或品牌', x: 42, y: 26, width: 389, height: 38, fontSize: 27, lineHeight: 34, maxLines: 1, weight: 650, color: '--surface' },
+      { id: 'topTag', label: '顶部标签', placeholder: '请填写顶部标签', x: 477, y: 26, width: 186, height: 36, fontSize: 24, lineHeight: 30, maxLines: 1, weight: 600, color: '--surface' },
+      { id: 'productTitle', label: '商品标题', placeholder: '请填写商品标题', x: 42, y: 110, width: 636, height: 104, fontSize: 40, lineHeight: 50, maxLines: 2, weight: 750, color: '--ink' },
+      { id: 'subtitle', label: '副标题', placeholder: '请填写一句话卖点', x: 42, y: 224, width: 636, height: 36, fontSize: 24, lineHeight: 30, maxLines: 1, weight: 400, color: '--muted' },
+      { id: 'leaderNote', label: '团长说', placeholder: '请填写团长推荐语', x: 146, y: 982, width: 514, height: 72, fontSize: 22, lineHeight: 32, maxLines: 2, weight: 400, color: '--muted' },
+      { id: 'buttonMain', label: '按钮主文案', placeholder: '请填写按钮主文案', x: 173, y: 1117, width: 507, height: 40, fontSize: 28, lineHeight: 34, maxLines: 1, weight: 750, color: '--ink' },
+      { id: 'buttonSub', label: '按钮副文案', placeholder: '请填写按钮副文案', x: 173, y: 1164, width: 507, height: 32, fontSize: 23, lineHeight: 28, maxLines: 1, weight: 400, color: '--muted' },
+      { id: 'shipping', label: '规格 / 发货信息', placeholder: '请填写规格 / 发货信息', x: 173, y: 1200, width: 507, height: 48, fontSize: 18, lineHeight: 22, maxLines: 2, weight: 400, color: '--muted' }
+    ];
+    const graphemeSegmenter = typeof Intl.Segmenter === 'function'
+      ? new Intl.Segmenter('zh-CN', { granularity: 'grapheme' }) : null;
+
+    function normalizePosterText(value) {
+      if (typeof value !== 'string') return '';
+      const normalized = value.replace(/\r\n?/g, '\n').replace(/\t/g, ' ');
+      // 只用 trim 判断是否全空白；有正文时保留首尾手动换行及空行。
+      return normalized.trim() ? normalized : '';
+    }
+
+    function* posterGraphemes(value) {
+      if (graphemeSegmenter) {
+        for (const part of graphemeSegmenter.segment(value)) yield part.segment;
+      } else {
+        // 旧浏览器退回 Unicode 码点，仍不切断代理对。
+        yield* value;
+      }
+    }
+
+    const MAX_POINTS = 6;
+    const pointEntries = [];
+    let nextPointId = 1;
+
+    function visibleSellingPoints() {
+      return pointEntries.filter((entry) => entry.input.value.trim());
+    }
+
+    function updatePointControls() {
+      pointEntries.forEach((entry, index) => {
+        const number = String(index + 1);
+        entry.label.textContent = number;
+        entry.input.setAttribute('aria-label', `卖点 ${number}`);
+        entry.removeButton.setAttribute('aria-label', `删除卖点 ${number}`);
+      });
+      const full = pointEntries.length >= MAX_POINTS;
+      const addButton = document.getElementById('addPoint');
+      addButton.disabled = full;
+      addButton.textContent = full ? '已达 6 条上限' : '+ 添加一条卖点';
+      document.getElementById('pointsCount').textContent = `${pointEntries.length} / ${MAX_POINTS} 条`;
+      document.getElementById('pointsEmpty').hidden = pointEntries.length !== 0;
+      const status = document.getElementById('pointsStatus');
+      const message = `已添加 ${pointEntries.length} 条，海报显示 ${visibleSellingPoints().length} 条。${full ? '已达上限，删除一条后可继续添加。' : ''}`;
+      if (status.textContent !== message) status.textContent = message;
+    }
+
+    function removeSellingPoint(entry) {
+      const index = pointEntries.indexOf(entry);
+      if (index < 0) return;
+      pointEntries.splice(index, 1);
+      entry.element.remove();
+      drawPosterPreview();
+      const neighbor = pointEntries[index] || pointEntries[index - 1];
+      (neighbor ? neighbor.input : document.getElementById('addPoint')).focus();
+    }
+
+    function addSellingPoint(value = '', focus = true) {
+      // 同时在事件处理处检查上限，快速连点也不会创建第七条。
+      if (pointEntries.length >= MAX_POINTS) return;
+      const element = document.createElement('div');
+      element.className = 'point-item';
+      const row = document.createElement('div');
+      row.className = 'point-row';
+      const label = document.createElement('label');
+      label.className = 'point-number';
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.id = `point-${nextPointId++}`;
+      input.name = input.id;
+      input.value = value;
+      input.placeholder = '填写一条商品卖点';
+      label.htmlFor = input.id;
+      const feedback = document.createElement('p');
+      feedback.id = `${input.id}-help`;
+      feedback.className = 'help field-feedback';
+      feedback.hidden = true;
+      feedback.setAttribute('aria-live', 'polite');
+      input.setAttribute('aria-describedby', `points-help ${feedback.id}`);
+      const removeButton = document.createElement('button');
+      removeButton.type = 'button';
+      removeButton.className = 'icon-button';
+      removeButton.textContent = '×';
+      const entry = { element, label, input, removeButton, feedback };
+      input.addEventListener('input', drawPosterPreview);
+      removeButton.addEventListener('click', () => removeSellingPoint(entry));
+      row.append(label, input, removeButton);
+      element.append(row, feedback);
+      pointEntries.push(entry);
+      document.getElementById('points').append(element);
+      drawPosterPreview();
+      if (focus) input.focus();
+    }
+
+    const templateNames = { center: '居中促销', list: '左图清单', large: '大图爆款' };
+    let activeTemplate = 'center';
+
+    function resolveImageRatio(mode, asset) {
+      const original = asset ? asset.width / asset.height : 3 / 4;
+      if (mode === 'portrait') return 3 / 4;
+      if (mode === 'square') return 1;
+      if (mode === 'original') return original;
+      // 自动只在两个标准框之间选择，0.875 是 0.75 与 1 的中点；不做主体识别。
+      return original < .875 ? 3 / 4 : 1;
+    }
+
+    function layoutSellingArea(count, template = 'center', ratio = 3 / 4) {
+      // 副标题到价格之间独立分配空间，底部转化区坐标不随条数改变。
+      const rows = Math.max(0, Math.min(MAX_POINTS, count));
+      const pointsTop = 835 - rows * 41;
+      const imageHeight = Math.min(540, pointsTop - 280 - (rows ? 19 : 0));
+      const bounds = template === 'list'
+        ? { x: 40, y: 280, width: 304, height: 540 }
+        : template === 'center'
+          ? { x: 180, y: 280, width: 360, height: Math.floor(imageHeight * .82) }
+        : { x: 40, y: 280, width: 640, height: imageHeight };
+      const height = Math.min(bounds.height, bounds.width / ratio);
+      const width = height * ratio;
+      return {
+        image: { x: bounds.x + (bounds.width - width) / 2, y: bounds.y, width, height },
+        points: Array.from({ length: rows }, (_, index) => template === 'list'
+          ? { x: 402, y: 300 + index * 82, width: 278, height: 64, maxLines: 2 }
+          : { x: 84, y: pointsTop + index * 41, width: 596, height: 34, maxLines: 1 })
+      };
+    }
+
+    function formatPriceCents(cents) {
+      return `${cents / 100n}.${(cents % 100n).toString().padStart(2, '0')}`;
+    }
+
+    function parsePrice(value) {
+      const raw = typeof value === 'string' ? value.trim() : '';
+      if (!raw) return { status: 'empty', cents: null, message: '请填写价格，留空不会按 0 元处理。' };
+      const invalid = (message) => ({ status: 'invalid', cents: null, message });
+      if (raw.startsWith('-')) return invalid('价格不能为负数，请改为 0 或正数。');
+      if (!/^(?:\d+(?:\.\d*)?|\.\d+)$/.test(raw)) {
+        return invalid('请输入有效金额，例如 19.90；不含货币符号、逗号或科学计数法。');
+      }
+      const [integerPart, fraction = ''] = raw.split('.');
+      const integer = integerPart.replace(/^0+/, '') || '0';
+      const rangeMessage = '金额超出展示范围，请修正为 0～999999.99 元。';
+      // 先限制整数位数，避免把超长输入交给 BigInt；金额只以整数分运算。
+      if (integer.length > 6) return invalid(rangeMessage);
+      let cents = BigInt(integer) * 100n + BigInt((fraction + '00').slice(0, 2));
+      if ((fraction[2] || '0') >= '5') cents += 1n;
+      if (cents > 99999999n) return invalid(rangeMessage);
+      const formatted = formatPriceCents(cents);
+      return {
+        status: 'valid', cents, formatted,
+        message: fraction.length > 2 ? `预览 ¥${formatted}，已四舍五入到两位小数；原文保留。` : `预览 ¥${formatted}`
+      };
+    }
+
+    function calculatePricing(originalValue, saleValue) {
+      const original = parsePrice(originalValue);
+      const sale = parsePrice(saleValue);
+      let discountText = '立即跟团';
+      let discountExplanation = '原价不高于团购价，使用中性文案，不显示负数优惠。';
+      if (original.status !== 'valid' || sale.status !== 'valid') {
+        discountExplanation = '请填写或修正两项价格；当前不计算优惠。';
+      } else if (original.cents > sale.cents) {
+        const saved = original.cents - sale.cents;
+        const wholeYuan = (saved + 50n) / 100n;
+        discountText = `立省 ¥${wholeYuan}`;
+        discountExplanation = `实际节省 ¥${formatPriceCents(saved)}，按整数四舍五入显示 ¥${wholeYuan}。`;
+      }
+      return { original, sale, discountText, discountExplanation };
+    }
+
+    function updatePriceFeedback(pricing) {
+      for (const [id, price] of [['originalPrice', pricing.original], ['salePrice', pricing.sale]]) {
+        const input = document.getElementById(id);
+        const help = document.getElementById(`${id}-help`);
+        input.setAttribute('aria-invalid', String(price.status === 'invalid'));
+        help.classList.toggle('is-invalid', price.status === 'invalid');
+        if (help.textContent !== price.message) help.textContent = price.message;
+      }
+      const discount = document.getElementById('discountValue');
+      const note = document.getElementById('discountNote');
+      if (discount.textContent !== pricing.discountText) discount.textContent = pricing.discountText;
+      if (note.textContent !== pricing.discountExplanation) note.textContent = pricing.discountExplanation;
+    }
+
+    // 按 Canvas 实际字宽换行；只测量可见区域，长粘贴不会逐行排完整段文字。
+    function layoutPosterText(value, maxWidth, maxLines, measure) {
+      const normalized = normalizePosterText(value);
+      if (!normalized) return { lines: [], truncated: false };
+      const lines = [''];
+      let truncated = false;
+      for (const part of posterGraphemes(normalized)) {
+        const last = lines.length - 1;
+        if (part === '\n') {
+          if (lines.length === maxLines) { truncated = true; break; }
+          lines.push('');
+        } else if (measure(lines[last] + part) <= maxWidth) {
+          lines[last] += part;
+        } else if (lines.length < maxLines && lines[last] && measure(part) <= maxWidth) {
+          lines.push(part);
+        } else {
+          truncated = true;
+          break;
+        }
+      }
+      if (truncated) {
+        const last = lines.length - 1;
+        const tail = Array.from(posterGraphemes(lines[last]));
+        while (tail.length && measure(tail.join('') + '…') > maxWidth) tail.pop();
+        lines[last] = measure('…') <= maxWidth ? tail.join('') + '…' : '';
+      }
+      return { lines, truncated };
+    }
+
+    function drawEditableText(ctx, region, font, token) {
+      const value = normalizePosterText(document.getElementById(region.id)?.value);
+      ctx.save();
+      ctx.font = `${region.weight} ${region.fontSize}px ${font}`;
+      ctx.fillStyle = token(region.color);
+      ctx.textBaseline = 'top';
+      ctx.beginPath();
+      ctx.rect(region.x, region.y, region.width, region.height);
+      ctx.clip();
+      const layout = layoutPosterText(value || region.placeholder, region.width - 4, region.maxLines,
+        (candidate) => ctx.measureText(candidate).width);
+      layout.lines.forEach((line, index) => {
+        ctx.fillText(line, region.x + 2, region.y + 2 + index * region.lineHeight);
+      });
+      ctx.restore();
+
+      const help = document.getElementById(`${region.id}-help`);
+      const message = layout.truncated ? `已截断为 ${region.maxLines} 行 · 原文保留` : `最多 ${region.maxLines} 行，超出显示 …`;
+      if (help.textContent !== message) help.textContent = message;
+      help.classList.toggle('is-truncated', layout.truncated);
+      if (region.hideNormalFeedback) help.hidden = !layout.truncated;
+      return `${region.label}：${layout.lines.join(' ')}${layout.truncated ? '（已截断）' : ''}`;
+    }
+
+    function drawPosterPreview() {
+      updatePointControls();
+      updateImageFeedback();
+      const pricing = calculatePricing(document.getElementById('originalPrice').value, document.getElementById('salePrice').value);
+      updatePriceFeedback(pricing);
+      const canvas = document.getElementById('previewCanvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      const materials = getCurrentMaterials();
+      const styles = getComputedStyle(document.documentElement);
+      const token = (name) => styles.getPropertyValue(name).trim();
+      const ink = token('--ink');
+      const muted = token('--muted');
+      const accent = token('--accent');
+      const soft = token('--accent-soft');
+      const white = token('--surface');
+      const font = token('--font');
+
+      function box(x, y, width, height, radius, color) {
+        const r = Math.min(radius, width / 2, height / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + width, y, x + width, y + height, r);
+        ctx.arcTo(x + width, y + height, x, y + height, r);
+        ctx.arcTo(x, y + height, x, y, r);
+        ctx.arcTo(x, y, x + width, y, r);
+        ctx.closePath();
+        ctx.fillStyle = color;
+        ctx.fill();
+      }
+      function text(value, x, y, size, color = ink, weight = 400) {
+        ctx.font = `${weight} ${size}px ${font}`;
+        ctx.fillStyle = color;
+        ctx.fillText(value, x, y);
+      }
+      function priceText(value, x, y, width, size, color, weight, strike = false) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(x, 869, width, 76);
+        ctx.clip();
+        ctx.textBaseline = 'alphabetic';
+        let fontSize = size;
+        ctx.font = `${weight} ${fontSize}px ${font}`;
+        // 金额必须完整显示：按宽度缩字号，不采用文案的省略号规则。
+        while (ctx.measureText(value).width > width - 2 && fontSize > 16) {
+          fontSize -= 1;
+          ctx.font = `${weight} ${fontSize}px ${font}`;
+        }
+        ctx.fillStyle = color;
+        ctx.fillText(value, x, y);
+        if (strike) {
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(x, y - fontSize * .32);
+          ctx.lineTo(x + ctx.measureText(value).width, y - fontSize * .32);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      ctx.fillStyle = white;
+      ctx.fillRect(0, 0, 720, 1280);
+      ctx.fillStyle = accent;
+      ctx.fillRect(0, 0, 720, 88);
+      box(461, 23, 218, 42, 21, '#ffffff26');
+
+      const visiblePoints = visibleSellingPoints();
+      const ratioMode = document.getElementById('imageRatio').value || 'auto';
+      const fit = document.getElementById('imageFit').value === 'cover' ? 'cover' : 'contain';
+      const ratio = resolveImageRatio(ratioMode, materials.product);
+      const sellingArea = layoutSellingArea(visiblePoints.length, activeTemplate, ratio);
+      const ratioLabel = ratioMode === 'original' && materials.product
+        ? `${materials.product.width}:${materials.product.height} 原图`
+        : ratio === 1 ? '1:1' : '3:4';
+      document.getElementById('image-layout-status').textContent = `当前：${templateNames[activeTemplate]} · ${ratioLabel} · ${fit === 'cover' ? '铺满裁切（居中裁边）' : '完整展示（允许留白）'}${!materials.product ? '；尚未选图，自动／原图比例暂用 3:4。' : ''}`;
+      const mainImage = sellingArea.image;
+      const imageCenterY = mainImage.y + mainImage.height / 2;
+      const imageCenterX = mainImage.x + mainImage.width / 2;
+      // 浅灰框让完整展示产生的留白可见。
+      ctx.fillStyle = '#f0f1f4';
+      ctx.fillRect(mainImage.x, mainImage.y, mainImage.width, mainImage.height);
+      if (materials.product) {
+        drawContainedImage(ctx, materials.product, mainImage, false, fit);
+      } else {
+        ctx.strokeStyle = '#c8cdd5';
+        ctx.lineWidth = 3;
+        const iconY = imageCenterY - 58;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(mainImage.x, mainImage.y, mainImage.width, mainImage.height);
+        ctx.clip();
+        ctx.strokeRect(imageCenterX - 25, iconY, 50, 40);
+        ctx.beginPath();
+        ctx.moveTo(imageCenterX - 24, iconY + 32);
+        ctx.lineTo(imageCenterX - 10, iconY + 16);
+        ctx.lineTo(imageCenterX + 2, iconY + 28);
+        ctx.lineTo(imageCenterX + 13, iconY + 14);
+        ctx.lineTo(imageCenterX + 24, iconY + 29);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(imageCenterX - 12, iconY + 11, 3, 0, Math.PI * 2);
+        ctx.stroke();
+        function imageCaption(value, offset, size, weight = 400) {
+          ctx.font = `${weight} ${size}px ${font}`;
+          text(value, imageCenterX - ctx.measureText(value).width / 2, imageCenterY + offset, size, muted, weight);
+        }
+        imageCaption('商品图片占位', 23, 26, 550);
+        imageCaption('教学占位 · 尚未选图', 57, 20);
+        imageCaption(`${ratioLabel} · ${fit === 'cover' ? '铺满裁切' : '完整展示'}`, 89, 20);
+        ctx.restore();
+      }
+
+      pointEntries.forEach((entry) => { entry.feedback.hidden = true; });
+      const pointDescriptions = visiblePoints.map((entry, index) => {
+        const region = sellingArea.points[index];
+        box(region.x - 41, region.y + 2, 28, 28, 14, soft);
+        text(String(index + 1), region.x - 33, region.y + 24, 20, token('--accent-ink'), 700);
+        return drawEditableText(ctx, {
+          ...region, id: entry.input.id, label: `卖点 ${index + 1}`, placeholder: '',
+          fontSize: 25, lineHeight: 30, maxLines: region.maxLines, weight: 550, color: '--ink', hideNormalFeedback: true
+        }, font, token);
+      });
+
+      box(40, 859, 640, 91, 14, soft);
+      const originalLabel = pricing.original.status === 'valid' ? `¥${pricing.original.formatted}`
+        : pricing.original.status === 'empty' ? '原价未填写' : '请修正原价';
+      const saleLabel = pricing.sale.status === 'valid' ? `¥${pricing.sale.formatted}`
+        : pricing.sale.status === 'empty' ? '团购价未填写' : '请修正团购价';
+      if (pricing.sale.status === 'valid') {
+        text('¥', 62, 919, 29, token('--accent-ink'), 650);
+        priceText(pricing.sale.formatted, 94, 924, 200, 56, token('--accent-ink'), 800);
+      } else {
+        priceText(saleLabel, 58, 919, 236, 28, token('--accent-ink'), 650);
+      }
+      priceText(originalLabel, 306, 915, 182, 25, muted, 400, pricing.original.status === 'valid');
+      box(506, 884, 156, 42, 21, accent);
+      priceText(pricing.discountText, 518, 913, 132, 25, white, 650);
+
+      box(40, 968, 640, 98, 12, '#f7f8fa');
+      text('团长说', 58, 1003, 23, token('--accent-ink'), 650);
+
+      ctx.setLineDash([5, 6]);
+      ctx.strokeStyle = '#e7e8ed';
+      ctx.beginPath();
+      ctx.moveTo(40, 1090);
+      ctx.lineTo(680, 1090);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      if (materials.qr) {
+        // 完整白底 + 四周至少 8 px 留白；不裁切二维码，也不读取其内容。
+        ctx.fillStyle = white;
+        ctx.fillRect(42, 1114, 108, 108);
+        drawContainedImage(ctx, materials.qr, { x: 50, y: 1122, width: 92, height: 92 }, true);
+      } else {
+        box(42, 1114, 108, 108, 12, '#f0f1f4');
+        text('二维码', 57, 1162, 24, muted);
+        text('占位·不可扫', 47, 1193, 18, muted);
+      }
+      const descriptions = textRegions.map((region) => drawEditableText(ctx, region, font, token));
+      const imageDescription = `主图：${materials.product ? materials.product.name : '未选择，显示占位'}；二维码：${materials.qr ? materials.qr.name : '未选择，占位不可扫码'}`;
+      const summary = `${templateNames[activeTemplate]}海报，720 × 1280 像素。${descriptions.join('；')}。核心卖点：${pointDescriptions.length ? pointDescriptions.join('；') : '未填写'}。原价：${originalLabel}；团购价：${saleLabel}；${pricing.discountText}。${imageDescription}。`;
+      // 只更新文字属性和 fallback 文本，不将输入解析为 HTML。
+      canvas.setAttribute('aria-label', summary);
+      canvas.textContent = summary;
+    }
+    let exportInProgress = false;
+
+    async function withExportTimeout(promise, message) {
+      let timer;
+      try {
+        return await Promise.race([promise, new Promise((_, reject) => {
+          timer = setTimeout(() => reject(new Error(message)), 30000);
+        })]);
+      } finally { clearTimeout(timer); }
+    }
+
+    function waitForCurrentImages() {
+      // 观察当前槽状态，已被替换的慢请求不会阻塞最新素材导出。
+      return new Promise((resolve, reject) => {
+        const cleanup = () => { clearTimeout(timer); imageStateListeners.delete(check); };
+        const check = () => {
+          if (!Object.values(currentAssets).some(slot => slot.status === 'loading')) {
+            cleanup(); resolve();
+          }
+        };
+        const timer = setTimeout(() => {
+          cleanup(); reject(new Error('图片读取超时，请重新选择图片后再导出。'));
+        }, 30000);
+        imageStateListeners.add(check);
+        check();
+      });
+    }
+
+    function posterFilename(template, date = new Date()) {
+      const pad = (value, digits = 2) => String(value).padStart(digits, '0');
+      return `ktt-poster-${template}-${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}-${pad(date.getMilliseconds(), 3)}.png`;
+    }
+
+    async function exportPosterPng() {
+      if (exportInProgress) return;
+      exportInProgress = true;
+      const button = document.getElementById('exportPng');
+      const status = document.getElementById('export-status');
+      button.disabled = true;
+      document.getElementById('resetDemo').disabled = true;
+      button.setAttribute('aria-busy', 'true');
+      status.classList.toggle('is-invalid', false);
+      status.textContent = '正在等待图片读取完成，并准备 720 × 1280 PNG…';
+      let url = null;
+      let link = null;
+      try {
+        if (document.fonts?.ready) await withExportTimeout(document.fonts.ready, '字体准备超时，请稍后重试。');
+        await waitForCurrentImages();
+        const failed = Object.values(currentAssets).find(slot => slot.status === 'error');
+        if (failed) throw new Error(`${failed.title}读取失败：${failed.error}请重新选择有效图片后导出。`);
+        const canvas = document.getElementById('previewCanvas');
+        if (!canvas.getContext('2d') || typeof canvas.toBlob !== 'function') {
+          throw new Error('此浏览器不支持 Canvas PNG 导出，请用新版 Chrome 或 Edge 打开。');
+        }
+        // 直接重用预览绘制与同一个 720×1280 Canvas，无页面截图或第二套排版。
+        drawPosterPreview();
+        const filename = posterFilename(activeTemplate);
+        const placeholder = !currentAssets.product.asset || !currentAssets.qr.asset;
+        // toBlob 在调用时取得画布快照；编码期间继续编辑不会混入这张图片。
+        const blob = await withExportTimeout(new Promise((resolve, reject) => {
+          canvas.toBlob(result => result && result.size > 0 && result.type === 'image/png'
+            ? resolve(result) : reject(new Error('浏览器未能生成 PNG，可能内存不足，请关闭其他页面后重试。')), 'image/png');
+        }), 'PNG 编码超时，请稍后重试。');
+        url = URL.createObjectURL(blob);
+        link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.append(link);
+        link.click();
+        status.textContent = `已发起 PNG 下载：${filename}。请在浏览器下载列表确认；若未出现，请检查下载拦截提示。${placeholder ? '本图含教学占位，不代表真实购买入口。' : '请检查最终图片中的二维码能否正确识别。'}`;
+      } catch (error) {
+        const reason = error.name === 'SecurityError'
+          ? '浏览器安全限制阻止读取画布，请重新从本机选择 PNG／JPG 后重试。'
+          : error.message || '浏览器无法生成或发起下载，请重试并检查下载权限。';
+        status.textContent = `导出失败：${reason}未确认保存任何文件。`;
+        status.classList.toggle('is-invalid', true);
+      } finally {
+        link?.remove();
+        if (url) {
+          const downloadURL = url;
+          // 给浏览器启动下载的时间，之后释放临时内存 URL。
+          setTimeout(() => URL.revokeObjectURL(downloadURL), 60000);
+        }
+        exportInProgress = false;
+        button.disabled = false;
+        document.getElementById('resetDemo').disabled = false;
+        button.setAttribute('aria-busy', 'false');
+      }
+    }
+
+    const demoPoints = ['卖点示例：介绍产地或材质', '卖点示例：说明口感或使用体验', '卖点示例：补充售后与服务'];
+
+    function restoreDemo() {
+      if (exportInProgress) return;
+      // 使用 HTML 的初始值作为唯一文字／价格示例来源，不改动当前模板。
+      [...textRegions.map(region => region.id), 'originalPrice', 'salePrice'].forEach(id => {
+        const input = document.getElementById(id);
+        input.value = input.defaultValue;
+      });
+      document.getElementById('imageRatio').value = 'auto';
+      document.getElementById('imageFit').value = 'contain';
+      for (const slot of Object.values(currentAssets)) {
+        ++slot.revision; // 让仍在读取／解码的旧请求失效，防止恢复后旧图回填。
+        slot.asset = null;
+        slot.pending = null;
+        slot.status = 'empty';
+        slot.error = '';
+        slot.pendingName = '';
+        document.getElementById(slot.inputId).value = '';
+      }
+      pointEntries.splice(0).forEach(entry => entry.element.remove());
+      demoPoints.forEach(value => addSellingPoint(value, false));
+      const status = document.getElementById('export-status');
+      status.classList.toggle('is-invalid', false);
+      status.textContent = '当前为教学示例，未选择主图和二维码；导出时会包含占位。';
+      drawPosterPreview();
+      document.getElementById('reset-status').textContent = `已恢复教学示例，已清空两张图片；保留「${templateNames[activeTemplate]}」版式。`;
+    }
+
+    document.getElementById('resetDemo').addEventListener('click', restoreDemo);
+    document.getElementById('exportPng').addEventListener('click', exportPosterPng);
+    textRegions.forEach((region) => {
+      document.getElementById(region.id).addEventListener('input', drawPosterPreview);
+    });
+    ['originalPrice', 'salePrice'].forEach((id) => {
+      document.getElementById(id).addEventListener('input', drawPosterPreview);
+    });
+    ['imageRatio', 'imageFit'].forEach(id => {
+      document.getElementById(id).addEventListener('change', drawPosterPreview);
+    });
+    Object.keys(templateNames).forEach(name => {
+      document.getElementById(`template-${name}`).addEventListener('click', () => {
+        activeTemplate = name;
+        Object.keys(templateNames).forEach(key => {
+          const button = document.getElementById(`template-${key}`);
+          button.setAttribute('aria-pressed', String(key === name));
+          button.classList.toggle('is-selected', key === name);
+        });
+        document.getElementById('active-template-name').textContent = templateNames[name];
+        drawPosterPreview();
+      });
+    });
+    Object.entries(currentAssets).forEach(([kind, slot]) => {
+      const input = document.getElementById(slot.inputId);
+      // 清空的只是选择器，当前素材仍由 currentAssets 保存，取消不会丢图。
+      input.addEventListener('click', () => { input.value = ''; });
+      input.addEventListener('change', () => selectLocalImage(kind, input.files?.[0]));
+    });
+    document.getElementById('addPoint').addEventListener('click', () => addSellingPoint());
+    demoPoints.forEach((value) => addSellingPoint(value, false));
+  </script>
+</body>
+</html>
